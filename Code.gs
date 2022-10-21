@@ -82,7 +82,7 @@ function createForm() {
 // Fill in the item properties
 function setItemProperties_(form, id, jsonObj) {
   var item = getTypedItem_(form.getItemById(id));
-  var itemType = item.getType();
+  var itemType = jsonObj.type;
 
   Logger.log(`Setting properties for item "${jsonObj.title}" (${itemType})`);
 
