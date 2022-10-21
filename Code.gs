@@ -3,10 +3,15 @@
 // - REST: https://developers.google.com/forms/api/reference/rest
 
 // TO DOs
-// - [ ] set goToPage on choices (use IDs to get PageBreakItem) FIX THIS line 80
-//       Here's what needs to happen: - create all the items in the form (don't create the choices yet)
-//                                    - store the ids and names of BreakPageItems as key/value pairs (names must be unique)
-//                                    - create choices for choice items together with the goToPage
+// - [.] set goToPage on choices (use IDs to get PageBreakItem)
+// - [ ]
+
+// -- Thoughts --
+// the goToIds array in the json records the ids from the original form
+// the ids in the generated form don't match so getItemById() returns null
+// how do I get the page item to go to?
+// - get the list of pageBreakItems from the form using form.getItems(itemType)
+// - find a match for the goToPage title (this only works if no two items have the same title)
 
 // References
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
@@ -60,8 +65,11 @@ function createForm() {
     // create item of the proper type
     var item = createItem(form, obj);
     // temporarily save the item's id and corresponding object
+    Logger.log(`${obj.title} : ${item.getId()}`);
     itemDict.push({ id: item.getId(), obj: obj });
   }
+
+  Logger.log(`---`);
 
   // set properties of each item
   for (entry of itemDict) {
@@ -92,11 +100,18 @@ function setItemProperties(form, id, obj) {
   var choices = [];
   if (obj.hasOwnProperty("choices")) {
     if (obj.hasOwnProperty("goToPages")) {
-      for (choice of obj.choices) {
-        // add choice with goToPage
-        var i = obj.choices.indexOf(choice);
-        var goToPage = form.getItemById(obj.goToIds[i]);
-        choices.push(item.createChoice(choice, goToPage)); // FIX THIS so that goToPage isn't null
+      for (let i = 0; i < obj.choices.length; i++) {
+        var choice = obj.choices[i];
+        var goToId = obj.goToIds[i];
+        if (isNull(goToId)) {
+          Logger.log(`${choice}`);
+          choices.push(item.createChoice(choice));
+        } else {
+          var targetItem = form.getItemById(goToId);
+          var targetPage = getTypedItem(targetItem);
+          Logger.log(`${choice}: ${goToId} : ${targetItem}`);
+          choices.push(item.createChoice(choice, targetPage));
+        }
       }
     } else {
       for (choice of obj.choices) {
@@ -155,6 +170,11 @@ function createItem(form, jsonObj) {
   }
 }
 
+/**
+ * Automatically cast a generic item to its typed equivalent
+ * @param item: generic item
+ * @returns the typed version of that item
+ */
 function getTypedItem(item) {
   // Downcast items to access type-specific properties
   var typeString = item.getType().toString();
@@ -174,4 +194,8 @@ function snakeCaseToCamelCase(s) {
   return s.toLowerCase().replace(/(\_\w)/g, function (m) {
     return m[1].toUpperCase();
   });
+}
+
+function isNull(objectToTest) {
+  return typeof objectToTest === "object" && !objectToTest;
 }
