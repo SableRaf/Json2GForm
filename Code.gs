@@ -64,6 +64,8 @@ function createForm() {
   for (obj of jsonObject.items) {
     // create item of the proper type
     var item = createItem(form, obj);
+    // set title
+    item.setTitle(obj.title);
     // temporarily save the item's id and corresponding object
     Logger.log(`${obj.title} : ${item.getId()}`);
     itemDict.push({ id: item.getId(), obj: obj });
@@ -86,8 +88,6 @@ function setItemProperties(form, id, obj) {
   var itemType = form.getItemById(id).getType();
   Logger.log(`"${obj.title}" (${itemType}) id: ${id}`);
   var item = getTypedItem(form.getItemById(id));
-  // set title
-  item.setTitle(obj.title);
   // set help text
   if (obj.hasOwnProperty("helpText")) {
     item.setHelpText(obj.helpText);
@@ -107,12 +107,13 @@ function setItemProperties(form, id, obj) {
         var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
         var goToId = null;
         for (pageBreakItem of pageBreakItemList) {
+          Logger.log(`pageBreakItem.getTitle() = ${pageBreakItem.getTitle()}`);
           if (pageBreakItem.getTitle() == obj.goToPages[i]) {
             goToId = pageBreakItem.getId();
           }
         }
         if (isNull(goToId)) {
-          Logger.log(`${choice}`);
+          Logger.log(`${choice}: null`);
           choices.push(item.createChoice(choice));
         } else {
           var targetItem = form.getItemById(goToId);
