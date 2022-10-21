@@ -61,7 +61,7 @@ function createForm() {
     // create item of the proper type
     var item = createItem_(form, obj);
     // set title
-    item.setTitle(obj.title); 
+    item.setTitle(obj.title);
     // temporarily save the item's id and corresponding object
     // Logger.log(`${obj.title} : ${item.getId()}`);
     itemDict.push({ id: item.getId(), obj: obj });
@@ -81,16 +81,42 @@ function createForm() {
 
 // Fill in the item properties
 function setItemProperties_(form, id, jsonObj) {
-  var itemType = form.getItemById(id).getType();
-  // Logger.log(`"${jsonObj.title}" (${itemType}) id: ${id}`);
-  var item = getTypedItem_(form.getItemById(id));
+  var item = form.getItemById(id);
+  var itemType = item.getType();
+
+  Logger.log(`Setting properties for item "${jsonObj.title}" (${itemType})`);
+
   // set help text
   if (jsonObj.hasOwnProperty("helpText")) {
     item.setHelpText(jsonObj.helpText);
   }
+
   // set required
   if (jsonObj.hasOwnProperty("isRequired")) {
     item.setRequired(jsonObj.isRequired);
+  }
+
+  // set type specific properties
+  switch (itemType) {
+    case typeEnum.SCALE:
+      var missingProperties = false;
+      var requiredProperties = [
+        "leftLabel",
+        "rightLabel",
+        "lowerBound",
+        "upperBound",
+      ];
+      for (prop of requiredProperties) {
+        if (!jsonObj.hasOwnProperty(prop)) {
+          missingProperties = true;
+          Logger.log(`Warning: "${jsonObj.title}" has no property: ${prop}`);
+        }
+      }
+      if (!missingProperties) {
+        item.setBounds(jsonObj.lowerBound, jsonObj.upperBound);
+        item.setLabels(jsonObj.leftLabel, jsonObj.rightLabel);
+      }
+      break;
   }
   // add choices
   var choices = [];
@@ -108,15 +134,19 @@ function setItemProperties_(form, id, jsonObj) {
           }
         }
         if (isNull_(goToId)) {
-          // Choices that use page navigation cannot be combined in  
+          // Choices that use page navigation cannot be combined in
           // the same item with choices that do not use page navigation.
-          // However we can set the PageNavigationType GO_TO_PAGE 
+          // However we can set the PageNavigationType GO_TO_PAGE
           // without actually setting a target PageBreakItem
-          choices.push(item.createChoice(choice,FormApp.PageNavigationType.GO_TO_PAGE));
+          choices.push(
+            item.createChoice(choice, FormApp.PageNavigationType.GO_TO_PAGE)
+          );
         } else {
           var targetItem = form.getItemById(goToId);
           var targetPage = getTypedItem_(targetItem);
-          Logger.log(`${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof(targetPage)}`);
+          Logger.log(
+            `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
+          );
           choices.push(item.createChoice(choice, targetPage));
         }
       }
