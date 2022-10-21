@@ -4,7 +4,7 @@
 
 // TO DOs
 // - [x] set goToPage on choices (use IDs to get PageBreakItem)
-// - [ ] handle linear scale left and right text
+// - [x] handle linear scale
 // - [ ] handle multiple choice grid
 // - [x] handle required
 // - [ ] handle "after section" page navigation type
