@@ -3,15 +3,8 @@
 // - REST: https://developers.google.com/forms/api/reference/rest
 
 // TO DOs
-// - [.] set goToPage on choices (use IDs to get PageBreakItem)
+// - [x] set goToPage on choices (use IDs to get PageBreakItem)
 // - [ ]
-
-// -- Thoughts --
-// the goToIds array in the json records the ids from the original form
-// the ids in the generated form don't match so getItemById() returns null
-// how do I get the page item to go to?
-// - get the list of pageBreakItems from the form using form.getItems(itemType)
-// - find a match for the goToPage title (this only works if no two items have the same title)
 
 // References
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
@@ -63,7 +56,7 @@ function createForm() {
 
   for (obj of jsonObject.items) {
     // create item of the proper type
-    var item = createItem(form, obj);
+    var item = createItem_(form, obj);
     // set title
     item.setTitle(obj.title);
     // temporarily save the item's id and corresponding object
@@ -76,7 +69,7 @@ function createForm() {
   // set properties of each item
   for (entry of itemDict) {
     // Logger.log(entry.obj.title);
-    setItemProperties(form, entry.id, entry.obj);
+    setItemProperties_(form, entry.id, entry.obj);
   }
 
   Logger.log("Published URL: " + form.getPublishedUrl());
@@ -84,10 +77,10 @@ function createForm() {
 }
 
 // Fill in the item properties
-function setItemProperties(form, id, obj) {
+function setItemProperties_(form, id, obj) {
   var itemType = form.getItemById(id).getType();
   // Logger.log(`"${obj.title}" (${itemType}) id: ${id}`);
-  var item = getTypedItem(form.getItemById(id));
+  var item = getTypedItem_(form.getItemById(id));
   // set help text
   if (obj.hasOwnProperty("helpText")) {
     item.setHelpText(obj.helpText);
@@ -111,7 +104,7 @@ function setItemProperties(form, id, obj) {
             goToId = pageBreakItem.getId();
           }
         }
-        if (isNull(goToId)) {
+        if (isNull_(goToId)) {
           // Choices that use page navigation cannot be combined in
           // the same item with choices that do not use page navigation.
           // However we can set the PageNavigationType GO_TO_PAGE
@@ -121,7 +114,7 @@ function setItemProperties(form, id, obj) {
           );
         } else {
           var targetItem = form.getItemById(goToId);
-          var targetPage = getTypedItem(targetItem);
+          var targetPage = getTypedItem_(targetItem);
           Logger.log(
             `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
           );
@@ -143,7 +136,7 @@ function setItemProperties(form, id, obj) {
 }
 
 // Add an item of the proper type to the form and return it
-function createItem(form, jsonObj) {
+function createItem_(form, jsonObj) {
   switch (jsonObj.type) {
     case typeEnum.CHECKBOX:
       return form.addCheckboxItem();
@@ -190,11 +183,11 @@ function createItem(form, jsonObj) {
  * @param item: generic item
  * @returns the typed version of that item
  */
-function getTypedItem(item) {
+function getTypedItem_(item) {
   // Downcast items to access type-specific properties
   var typeString = item.getType().toString();
   if (typeString === "DATETIME") typeString = "DATE_TIME"; // handle the corner case of DATETIME
-  var itemTypeConstructorName = snakeCaseToCamelCase(
+  var itemTypeConstructorName = snakeCaseToCamelCase_(
     "AS_" + typeString + "_ITEM"
   );
   return item[itemTypeConstructorName]();
@@ -205,12 +198,12 @@ function getTypedItem(item) {
  * @param s: string in snake_case
  * @returns (string) the camelCase version of that string
  */
-function snakeCaseToCamelCase(s) {
+function snakeCaseToCamelCase_(s) {
   return s.toLowerCase().replace(/(\_\w)/g, function (m) {
     return m[1].toUpperCase();
   });
 }
 
-function isNull(objectToTest) {
+function isNull_(objectToTest) {
   return typeof objectToTest === "object" && !objectToTest;
 }
