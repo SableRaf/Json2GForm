@@ -6,7 +6,7 @@
 // - [x] set goToPage on choices (use IDs to get PageBreakItem)
 // - [ ] handle linear scale left and right text
 // - [ ] handle multiple choice grid
-// - [ ] handle required
+// - [x] handle required
 // - [ ] handle "after section" page navigation type
 
 // References
@@ -89,8 +89,8 @@ function setItemProperties_(form, id, jsonObj) {
     item.setHelpText(jsonObj.helpText);
   }
   // set required
-  if (jsonObj.hasOwnProperty("required")) {
-    item.setRequired(jsonObj.required);
+  if (jsonObj.hasOwnProperty("isRequired")) {
+    item.setRequired(jsonObj.isRequired);
   }
   // add choices
   var choices = [];
