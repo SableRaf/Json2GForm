@@ -117,51 +117,57 @@ function setItemProperties_(form, id, jsonObj) {
         item.setLabels(jsonObj.leftLabel, jsonObj.rightLabel);
       }
       break;
-  }
-  // add choices
-  var choices = [];
-  if (jsonObj.hasOwnProperty("choices")) {
-    if (jsonObj.hasOwnProperty("goToPages")) {
-      for (let i = 0; i < jsonObj.choices.length; i++) {
-        var choice = jsonObj.choices[i];
-        // var goToId = jsonObj.goToIds[i]; // wrong ids (these are from the old form)
-        // get goToId from the title of the goToPage
-        var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
-        var goToId = null;
-        for (pageBreakItem of pageBreakItemList) {
-          if (pageBreakItem.getTitle() == jsonObj.goToPages[i]) {
-            goToId = pageBreakItem.getId();
-          }
-        }
-        if (isNull_(goToId)) {
-          // Choices that use page navigation cannot be combined in
-          // the same item with choices that do not use page navigation.
-          // However we can set the PageNavigationType GO_TO_PAGE
-          // without actually setting a target PageBreakItem
-          choices.push(
-            item.createChoice(choice, FormApp.PageNavigationType.GO_TO_PAGE)
-          );
-        } else {
-          var targetItem = form.getItemById(goToId);
-          var targetPage = getTypedItem_(targetItem);
-          Logger.log(
-            `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
-          );
-          choices.push(item.createChoice(choice, targetPage));
-        }
+    case typeEnum.MULTIPLE_CHOICE || typeEnum.CHECKBOX || typeEnum.LIST:
+      if (!jsonObj.hasOwnProperty("choices")) {
+        Logger.log(`Warning: "${jsonObj.title}" has no property: choices`);
+      } else {
+        item.setChoices(getChoices_(item,form,jsonObj));
       }
-    } else {
-      for (choice of jsonObj.choices) {
-        // add choice without goToPage
-        choices.push(item.createChoice(choice));
-      }
-    }
-    item.setChoices(choices);
   }
   // set hasOtherOption if the item has the property
   if (jsonObj.hasOwnProperty("hasOtherOption")) {
     item.showOtherOption(jsonObj.hasOtherOption);
   }
+}
+
+function getChoices_(item,form,jsonObj){
+  var choices = [];
+  if (jsonObj.hasOwnProperty("goToPages")) {
+    for (let i = 0; i < jsonObj.choices.length; i++) {
+      var choice = jsonObj.choices[i];
+      // var goToId = jsonObj.goToIds[i]; // wrong ids (these are from the old form)
+      // get goToId from the title of the goToPage
+      var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
+      var goToId = null;
+      for (pageBreakItem of pageBreakItemList) {
+        if (pageBreakItem.getTitle() == jsonObj.goToPages[i]) {
+          goToId = pageBreakItem.getId();
+        }
+      }
+      if (isNull_(goToId)) {
+        // Choices that use page navigation cannot be combined in
+        // the same item with choices that do not use page navigation.
+        // However we can set the PageNavigationType GO_TO_PAGE
+        // without actually setting a target PageBreakItem
+        choices.push(
+          item.createChoice(choice, FormApp.PageNavigationType.GO_TO_PAGE)
+        );
+      } else {
+        var targetItem = form.getItemById(goToId);
+        var targetPage = getTypedItem_(targetItem);
+        Logger.log(
+          `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
+        );
+        choices.push(item.createChoice(choice, targetPage));
+      }
+    }
+  } else {
+    for (choice of jsonObj.choices) {
+      // add choice without goToPage
+      choices.push(item.createChoice(choice));
+    }
+  }
+  return choices;
 }
 
 // Add an item of the proper type to the form and return it
