@@ -61,7 +61,7 @@ function createForm() {
     // create item of the proper type
     var item = createItem_(form, obj);
     // set title
-    item.setTitle(obj.title);
+    item.setTitle(obj.title); 
     // temporarily save the item's id and corresponding object
     // Logger.log(`${obj.title} : ${item.getId()}`);
     itemDict.push({ id: item.getId(), obj: obj });
@@ -80,52 +80,48 @@ function createForm() {
 }
 
 // Fill in the item properties
-function setItemProperties_(form, id, obj) {
+function setItemProperties_(form, id, jsonObj) {
   var itemType = form.getItemById(id).getType();
-  // Logger.log(`"${obj.title}" (${itemType}) id: ${id}`);
+  // Logger.log(`"${jsonObj.title}" (${itemType}) id: ${id}`);
   var item = getTypedItem_(form.getItemById(id));
   // set help text
-  if (obj.hasOwnProperty("helpText")) {
-    item.setHelpText(obj.helpText);
+  if (jsonObj.hasOwnProperty("helpText")) {
+    item.setHelpText(jsonObj.helpText);
   }
   // set required
-  if (obj.hasOwnProperty("required")) {
-    item.setRequired(obj.required);
+  if (jsonObj.hasOwnProperty("required")) {
+    item.setRequired(jsonObj.required);
   }
   // add choices
   var choices = [];
-  if (obj.hasOwnProperty("choices")) {
-    if (obj.hasOwnProperty("goToPages")) {
-      for (let i = 0; i < obj.choices.length; i++) {
-        var choice = obj.choices[i];
-        // var goToId = obj.goToIds[i]; // wrong ids (these are from the old form)
+  if (jsonObj.hasOwnProperty("choices")) {
+    if (jsonObj.hasOwnProperty("goToPages")) {
+      for (let i = 0; i < jsonObj.choices.length; i++) {
+        var choice = jsonObj.choices[i];
+        // var goToId = jsonObj.goToIds[i]; // wrong ids (these are from the old form)
         // get goToId from the title of the goToPage
         var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
         var goToId = null;
         for (pageBreakItem of pageBreakItemList) {
-          if (pageBreakItem.getTitle() == obj.goToPages[i]) {
+          if (pageBreakItem.getTitle() == jsonObj.goToPages[i]) {
             goToId = pageBreakItem.getId();
           }
         }
         if (isNull_(goToId)) {
-          // Choices that use page navigation cannot be combined in
+          // Choices that use page navigation cannot be combined in  
           // the same item with choices that do not use page navigation.
-          // However we can set the PageNavigationType GO_TO_PAGE
+          // However we can set the PageNavigationType GO_TO_PAGE 
           // without actually setting a target PageBreakItem
-          choices.push(
-            item.createChoice(choice, FormApp.PageNavigationType.GO_TO_PAGE)
-          );
+          choices.push(item.createChoice(choice,FormApp.PageNavigationType.GO_TO_PAGE));
         } else {
           var targetItem = form.getItemById(goToId);
           var targetPage = getTypedItem_(targetItem);
-          Logger.log(
-            `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
-          );
+          Logger.log(`${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof(targetPage)}`);
           choices.push(item.createChoice(choice, targetPage));
         }
       }
     } else {
-      for (choice of obj.choices) {
+      for (choice of jsonObj.choices) {
         // add choice without goToPage
         choices.push(item.createChoice(choice));
       }
@@ -133,8 +129,8 @@ function setItemProperties_(form, id, obj) {
     item.setChoices(choices);
   }
   // set hasOtherOption if the item has the property
-  if (obj.hasOwnProperty("hasOtherOption")) {
-    item.showOtherOption(obj.hasOtherOption);
+  if (jsonObj.hasOwnProperty("hasOtherOption")) {
+    item.showOtherOption(jsonObj.hasOtherOption);
   }
 }
 
