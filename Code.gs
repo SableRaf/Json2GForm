@@ -4,7 +4,10 @@
 
 // TO DOs
 // - [x] set goToPage on choices (use IDs to get PageBreakItem)
-// - [ ]
+// - [ ] handle linear scale left and right text
+// - [ ] handle multiple choice grid
+// - [ ] handle required
+// - [ ] handle "after section" page navigation type
 
 // References
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
