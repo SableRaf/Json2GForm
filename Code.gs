@@ -102,7 +102,15 @@ function setItemProperties(form, id, obj) {
     if (obj.hasOwnProperty("goToPages")) {
       for (let i = 0; i < obj.choices.length; i++) {
         var choice = obj.choices[i];
-        var goToId = obj.goToIds[i];
+        // var goToId = obj.goToIds[i]; // wrong ids (these are from the old form)
+        // get goToId from the title of the goToPage
+        var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
+        var goToId = null;
+        for (pageBreakItem of pageBreakItemList) {
+          if (pageBreakItem.getTitle() == obj.goToPages[i]) {
+            goToId = pageBreakItem.getId();
+          }
+        }
         if (isNull(goToId)) {
           Logger.log(`${choice}`);
           choices.push(item.createChoice(choice));
