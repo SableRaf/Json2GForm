@@ -67,11 +67,11 @@ function createForm() {
     // set title
     item.setTitle(obj.title);
     // temporarily save the item's id and corresponding object
-    Logger.log(`${obj.title} : ${item.getId()}`);
+    // Logger.log(`${obj.title} : ${item.getId()}`);
     itemDict.push({ id: item.getId(), obj: obj });
   }
 
-  Logger.log(`---`);
+  // Logger.log(`---`);
 
   // set properties of each item
   for (entry of itemDict) {
@@ -86,7 +86,7 @@ function createForm() {
 // Fill in the item properties
 function setItemProperties(form, id, obj) {
   var itemType = form.getItemById(id).getType();
-  Logger.log(`"${obj.title}" (${itemType}) id: ${id}`);
+  // Logger.log(`"${obj.title}" (${itemType}) id: ${id}`);
   var item = getTypedItem(form.getItemById(id));
   // set help text
   if (obj.hasOwnProperty("helpText")) {
@@ -107,18 +107,24 @@ function setItemProperties(form, id, obj) {
         var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
         var goToId = null;
         for (pageBreakItem of pageBreakItemList) {
-          Logger.log(`pageBreakItem.getTitle() = ${pageBreakItem.getTitle()}`);
           if (pageBreakItem.getTitle() == obj.goToPages[i]) {
             goToId = pageBreakItem.getId();
           }
         }
         if (isNull(goToId)) {
-          Logger.log(`${choice}: null`);
-          choices.push(item.createChoice(choice));
+          // Choices that use page navigation cannot be combined in
+          // the same item with choices that do not use page navigation.
+          // However we can set the PageNavigationType GO_TO_PAGE
+          // without actually setting a target PageBreakItem
+          choices.push(
+            item.createChoice(choice, FormApp.PageNavigationType.GO_TO_PAGE)
+          );
         } else {
           var targetItem = form.getItemById(goToId);
           var targetPage = getTypedItem(targetItem);
-          Logger.log(`${choice}: ${goToId} : ${targetItem}`);
+          Logger.log(
+            `${choice}: ${goToId} : ${targetPage.getTitle()} : ${typeof targetPage}`
+          );
           choices.push(item.createChoice(choice, targetPage));
         }
       }
