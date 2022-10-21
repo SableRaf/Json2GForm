@@ -119,10 +119,11 @@ function setItemProperties_(form, id, jsonObj) {
       break;
     case typeEnum.MULTIPLE_CHOICE || typeEnum.CHECKBOX || typeEnum.LIST:
       if (!jsonObj.hasOwnProperty("choices")) {
-        Logger.log(`Warning: "${jsonObj.title}" has no property: choices`);
+        Logger.log(`Warning: "${jsonObj.title}" (${itemType}) has no property: choices`);
       } else {
         item.setChoices(getChoices_(item,form,jsonObj));
       }
+      break;
   }
   // set hasOtherOption if the item has the property
   if (jsonObj.hasOwnProperty("hasOtherOption")) {
