@@ -5,6 +5,7 @@
 // TO DOs
 // - [x] set goToPage on choices (use IDs to get PageBreakItem)
 // - [x] handle linear scale
+// - [x] warning for duplicate page titles
 // - [ ] handle multiple choice grid
 // - [x] handle required
 // - [ ] handle "after section" page navigation type
@@ -13,7 +14,8 @@
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
 
 // var jsonFilename = "source-json.html";
-var jsonFilename = "dummy-json.html";
+// var jsonFilename = "dummy-json.html";
+var jsonFilename = "duplicateTitles-json.html";
 
 var formTitlePrefix = "(deleteMe) "; // for debuging
 
@@ -67,7 +69,15 @@ function createForm() {
     itemDict.push({ id: item.getId(), obj: obj });
   }
 
-  // Logger.log(`---`);
+  // Look for sections with the same title
+  // Duplicates will lead to wrong goTo targets
+  var titles = form.getItems(FormApp.ItemType.PAGE_BREAK).map(item => item.getTitle());
+  if(hasDuplicates_(titles)){
+    Logger.log(`🟡 Warning: found multiple PageBreakItem with the same title.`);
+    for(var t of getDuplicatesFrom_(titles)){
+      Logger.log(`🟡 Duplicate: "${t}"`);
+    }
+  }
 
   // set properties of each item
   for (entry of itemDict) {
@@ -109,17 +119,18 @@ function setItemProperties_(form, id, jsonObj) {
       for (prop of requiredProperties) {
         if (!jsonObj.hasOwnProperty(prop)) {
           missingProperties = true;
-          Logger.log(`Warning: "${jsonObj.title}" has no property: ${prop}`);
+          Logger.log(`🟡 Warning: "${jsonObj.title}" has no property: ${prop}`);
         }
       }
       if (!missingProperties) {
-        item.setBounds(jsonObj.lowerBound, jsonObj.upperBound);
-        item.setLabels(jsonObj.leftLabel, jsonObj.rightLabel);
+        const { lowerBound, upperBound, leftLabel, rightLabel } = jsonObj;
+        item.setBounds(lowerBound, upperBound);
+        item.setLabels(leftLabel, rightLabel);
       }
       break;
     case typeEnum.MULTIPLE_CHOICE || typeEnum.CHECKBOX || typeEnum.LIST:
       if (!jsonObj.hasOwnProperty("choices")) {
-        Logger.log(`Warning: "${jsonObj.title}" (${itemType}) has no property: choices`);
+        Logger.log(`🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: choices`);
       } else {
         item.setChoices(getChoices_(item,form,jsonObj));
       }
@@ -132,15 +143,14 @@ function setItemProperties_(form, id, jsonObj) {
 }
 
 function getChoices_(item,form,jsonObj){
+
   var choices = [];
   if (jsonObj.hasOwnProperty("goToPages")) {
     for (let i = 0; i < jsonObj.choices.length; i++) {
       var choice = jsonObj.choices[i];
-      // var goToId = jsonObj.goToIds[i]; // wrong ids (these are from the old form)
       // get goToId from the title of the goToPage
-      var pageBreakItemList = form.getItems(FormApp.ItemType.PAGE_BREAK);
       var goToId = null;
-      for (pageBreakItem of pageBreakItemList) {
+      for (pageBreakItem of form.getItems(FormApp.ItemType.PAGE_BREAK)) {
         if (pageBreakItem.getTitle() == jsonObj.goToPages[i]) {
           goToId = pageBreakItem.getId();
         }
@@ -242,4 +252,28 @@ function snakeCaseToCamelCase_(s) {
 
 function isNull_(objectToTest) {
   return typeof objectToTest === "object" && !objectToTest;
+}
+
+function hasDuplicates_(arr) {
+  let set = new Set()
+  return arr.some(el => {
+    if (set.has(el)) return true
+    set.add(el)
+  })
+}
+
+// https://flexiple.com/javascript/find-duplicates-javascript-array/
+function getDuplicatesFrom_(arr) {
+  const uniqueElements = new Set(arr);
+  const filteredElements = arr.filter((item) => {
+    if (uniqueElements.has(item)) {
+      uniqueElements.delete(item);
+    } else {
+      return item;
+    }
+  });
+
+  // code from flexiple was broken: return [...new Set(uniqueElements)];
+  // uniqueElements ends up empty after filter() is done
+  return [...new Set(filteredElements)]; 
 }
