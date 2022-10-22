@@ -6,7 +6,7 @@
 // - [x] set goToPage on choices (use IDs to get PageBreakItem)
 // - [x] handle linear scale
 // - [x] warning for duplicate page titles
-// - [ ] handle multiple choice grid
+// - [x] handle multiple choice grid
 // - [x] handle required
 // - [x] handle "after section" page navigation type
 // - [ ] handle "after section" goToPage
@@ -161,6 +161,22 @@ function setItemProperties_(form, id, jsonObj) {
       } else {
         var navType = getNavigationTypeFrom_(jsonObj.pageNavigationType);
         item.setGoToPage(navType);
+      }
+      break;
+    case typeEnum.GRID || typeEnum.CHECKBOX_GRID:
+      if (!jsonObj.hasOwnProperty("rows")) {
+        Logger.log(
+          `🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: rows`
+        );
+      } else {
+        item.setRows(jsonObj.rows);
+      }
+      if (!jsonObj.hasOwnProperty("columns")) {
+        Logger.log(
+          `🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: columns`
+        );
+      } else {
+        item.setColumns(jsonObj.columns);
       }
       break;
   }
