@@ -172,12 +172,12 @@
             "goToPage": null,
             "id": 1161875643,
             "index": 12,
-            "helpText": "A group of angry Goblins steal your lunchbox. You die of starvation. GAME OVER"
+            "helpText": "A group of angry Goblins steal your lunchbox. You die of starvation. GAME OVER. Click NEXT to try again"
         },
         {
             "type": "PAGE_BREAK",
             "title": "East path",
-            "pageNavigationType": "SUBMIT",
+            "pageNavigationType": "RESTART",
             "goToPage": null,
             "id": 763019685,
             "index": 13,

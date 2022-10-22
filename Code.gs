@@ -8,14 +8,16 @@
 // - [x] warning for duplicate page titles
 // - [ ] handle multiple choice grid
 // - [x] handle required
-// - [ ] handle "after section" page navigation type
+// - [x] handle "after section" page navigation type
+// - [ ] handle "after section" goToPage
+//       - [ ] encapsulate getting goToPage from title
 
 // References
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
 
 // var jsonFilename = "source-json.html";
-// var jsonFilename = "dummy-json.html";
-var jsonFilename = "duplicateTitles-json.html";
+var jsonFilename = "dummy-json.html";
+// var jsonFilename = "duplicateTitles-json.html";
 
 var formTitlePrefix = "(deleteMe) "; // for debuging
 
@@ -45,6 +47,13 @@ const typeEnum = {
   FILE_UPLOAD: "FILE_UPLOAD",
 };
 
+const pageNavigationEnum = {
+  CONTINUE: "CONTINUE",
+  GO_TO_PAGE: "GO_TO_PAGE",
+  RESTART: "RESTART",
+  SUBMIT: "SUBMIT",
+};
+
 // Make a minimal form (for testing)
 function createDummyForm() {
   var form = FormApp.create(formTitlePrefix + "New Form");
@@ -71,10 +80,12 @@ function createForm() {
 
   // Look for sections with the same title
   // Duplicates will lead to wrong goTo targets
-  var titles = form.getItems(FormApp.ItemType.PAGE_BREAK).map(item => item.getTitle());
-  if(hasDuplicates_(titles)){
+  var titles = form
+    .getItems(FormApp.ItemType.PAGE_BREAK)
+    .map((item) => item.getTitle());
+  if (hasDuplicates_(titles)) {
     Logger.log(`🟡 Warning: found multiple PageBreakItem with the same title.`);
-    for(var t of getDuplicatesFrom_(titles)){
+    for (var t of getDuplicatesFrom_(titles)) {
       Logger.log(`🟡 Duplicate: "${t}"`);
     }
   }
@@ -130,9 +141,26 @@ function setItemProperties_(form, id, jsonObj) {
       break;
     case typeEnum.MULTIPLE_CHOICE || typeEnum.CHECKBOX || typeEnum.LIST:
       if (!jsonObj.hasOwnProperty("choices")) {
-        Logger.log(`🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: choices`);
+        Logger.log(
+          `🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: choices`
+        );
       } else {
-        item.setChoices(getChoices_(item,form,jsonObj));
+        item.setChoices(getChoices_(item, form, jsonObj));
+      }
+      break;
+    case typeEnum.PAGE_BREAK:
+      if (!jsonObj.hasOwnProperty("goToPage")) {
+        Logger.log(`🟡 Warning: "${jsonObj.title}" has no property: goToPage`);
+      } else {
+        //item.setGoToPage(jsonObj.goToPage); // TO DO make it a PageBreakItem
+      }
+      if (!jsonObj.hasOwnProperty("pageNavigationType")) {
+        Logger.log(
+          `🟡 Warning: "${jsonObj.title}" has no property: pageNavigationType`
+        );
+      } else {
+        var navType = getNavigationTypeFrom_(jsonObj.pageNavigationType);
+        item.setGoToPage(navType);
       }
       break;
   }
@@ -142,8 +170,7 @@ function setItemProperties_(form, id, jsonObj) {
   }
 }
 
-function getChoices_(item,form,jsonObj){
-
+function getChoices_(item, form, jsonObj) {
   var choices = [];
   if (jsonObj.hasOwnProperty("goToPages")) {
     for (let i = 0; i < jsonObj.choices.length; i++) {
@@ -179,6 +206,21 @@ function getChoices_(item,form,jsonObj){
     }
   }
   return choices;
+}
+
+function getNavigationTypeFrom_(str) {
+  switch (str) {
+    case pageNavigationEnum.CONTINUE:
+      return FormApp.PageNavigationType.CONTINUE;
+    case pageNavigationEnum.RESTART:
+      return FormApp.PageNavigationType.RESTART;
+    case pageNavigationEnum.GO_TO_PAGE:
+      return FormApp.PageNavigationType.GO_TO_PAGE;
+    case pageNavigationEnum.SUBMIT:
+      return FormApp.PageNavigationType.SUBMIT;
+    default:
+      return FormApp.PageNavigationType.CONTINUE;
+  }
 }
 
 // Add an item of the proper type to the form and return it
@@ -255,11 +297,11 @@ function isNull_(objectToTest) {
 }
 
 function hasDuplicates_(arr) {
-  let set = new Set()
-  return arr.some(el => {
-    if (set.has(el)) return true
-    set.add(el)
-  })
+  let set = new Set();
+  return arr.some((el) => {
+    if (set.has(el)) return true;
+    set.add(el);
+  });
 }
 
 // https://flexiple.com/javascript/find-duplicates-javascript-array/
@@ -275,5 +317,5 @@ function getDuplicatesFrom_(arr) {
 
   // code from flexiple was broken: return [...new Set(uniqueElements)];
   // uniqueElements ends up empty after filter() is done
-  return [...new Set(filteredElements)]; 
+  return [...new Set(filteredElements)];
 }
