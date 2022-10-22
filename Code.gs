@@ -11,13 +11,13 @@
 // - [x] handle "after section" page navigation type
 // - [ ] handle "after section" goToPage
 //       - [ ] encapsulate getting goToPage from title
+// - [x] fix the checkboxes and list
 
 // References
 // https://stackoverflow.com/questions/53096914/google-script-forms-listitem-how-to-set-pagebreakitems-for-each-choice
 
-// var jsonFilename = "source-json.html";
-var jsonFilename = "dummy-json.html";
-// var jsonFilename = "duplicateTitles-json.html";
+var jsonFilename = "source-json.html";
+//var jsonFilename = "dummy-json.html";
 
 var formTitlePrefix = "(deleteMe) "; // for debuging
 
@@ -118,8 +118,8 @@ function setItemProperties_(form, id, jsonObj) {
   }
 
   // set type specific properties
-  switch (itemType) {
-    case typeEnum.SCALE:
+  switch (item.getType()) {
+    case FormApp.ItemType.SCALE:
       var missingProperties = false;
       var requiredProperties = [
         "leftLabel",
@@ -139,16 +139,19 @@ function setItemProperties_(form, id, jsonObj) {
         item.setLabels(leftLabel, rightLabel);
       }
       break;
-    case typeEnum.MULTIPLE_CHOICE || typeEnum.CHECKBOX || typeEnum.LIST:
+    case FormApp.ItemType.MULTIPLE_CHOICE:
+    case FormApp.ItemType.CHECKBOX:
+    case FormApp.ItemType.LIST:
       if (!jsonObj.hasOwnProperty("choices")) {
         Logger.log(
           `🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: choices`
         );
       } else {
-        item.setChoices(getChoices_(item, form, jsonObj));
+        var choices = getChoices_(item, form, jsonObj);
+        item.setChoices(choices);
       }
       break;
-    case typeEnum.PAGE_BREAK:
+    case FormApp.ItemType.PAGE_BREAK:
       if (!jsonObj.hasOwnProperty("goToPage")) {
         Logger.log(`🟡 Warning: "${jsonObj.title}" has no property: goToPage`);
       } else {
@@ -160,10 +163,11 @@ function setItemProperties_(form, id, jsonObj) {
         );
       } else {
         var navType = getNavigationTypeFrom_(jsonObj.pageNavigationType);
-        item.setGoToPage(navType);
+        // item.setGoToPage(navType); // Exception: This operation is not supported
       }
       break;
-    case typeEnum.GRID || typeEnum.CHECKBOX_GRID:
+    case FormApp.ItemType.GRID:
+    case FormApp.ItemType.CHECKBOX_GRID:
       if (!jsonObj.hasOwnProperty("rows")) {
         Logger.log(
           `🟡 Warning: "${jsonObj.title}" (${itemType}) has no property: rows`
